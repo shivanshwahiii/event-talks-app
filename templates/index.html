@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Hub</title>
+    <!-- Metadata for SEO & responsiveness -->
+    <meta name="description" content="A premium, real-time dashboard for browsing, searching, filtering, and tweeting BigQuery release notes.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-layout">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="brand">
+                    <div class="logo-icon">
+                        <i class="fa-solid fa-database animate-pulse-logo"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h1>BigQuery <span>Release Notes</span></h1>
+                        <p class="subtitle">Stay updated with Google Cloud BigQuery news</p>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <span id="last-updated-text" class="status-indicator">Updating...</span>
+                    <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
+                        <i class="fa-solid fa-rotate" id="refresh-icon"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            <!-- Stats Dashboard Banner -->
+            <section class="stats-banner" id="stats-banner">
+                <div class="stat-card" data-filter="all">
+                    <span class="stat-num" id="stat-all">0</span>
+                    <span class="stat-label">Total Updates</span>
+                </div>
+                <div class="stat-card feature-border" data-filter="Feature">
+                    <span class="stat-num text-feature" id="stat-feature">0</span>
+                    <span class="stat-label">Features</span>
+                </div>
+                <div class="stat-card announcement-border" data-filter="Announcement">
+                    <span class="stat-num text-announcement" id="stat-announcement">0</span>
+                    <span class="stat-label">Announcements</span>
+                </div>
+                <div class="stat-card breaking-border" data-filter="Breaking">
+                    <span class="stat-num text-breaking" id="stat-breaking">0</span>
+                    <span class="stat-label">Breaking</span>
+                </div>
+                <div class="stat-card issue-border" data-filter="Issue">
+                    <span class="stat-num text-issue" id="stat-issue">0</span>
+                    <span class="stat-label">Issues</span>
+                </div>
+            </section>
+
+            <!-- Search and Filter Bar -->
+            <section class="filter-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search release notes by keyword or feature..." autocomplete="off">
+                    <button id="clear-search-btn" class="clear-btn" style="display: none;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div class="filter-controls">
+                    <span class="filter-title"><i class="fa-solid fa-filter"></i> Filter:</span>
+                    <div class="pill-group" id="filter-pills">
+                        <button class="pill active" data-filter="all">All</button>
+                        <button class="pill" data-filter="Feature">Features</button>
+                        <button class="pill" data-filter="Announcement">Announcements</button>
+                        <button class="pill" data-filter="Breaking">Breaking</button>
+                        <button class="pill" data-filter="Issue">Issues</button>
+                        <button class="pill" data-filter="Change">Changes</button>
+                        <button class="pill" data-filter="Update">General</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Banner -->
+            <div id="error-banner" class="alert alert-danger" style="display: none;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span id="error-msg">Failed to connect.</span>
+            </div>
+
+            <!-- Loader -->
+            <div id="loader" class="loader-container">
+                <div class="premium-spinner"></div>
+                <p>Retrieving release notes...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state-container" style="display: none;">
+                <i class="fa-solid fa-folder-open empty-icon"></i>
+                <h3>No release notes found</h3>
+                <p>Try resetting your filters or clearing your search term.</p>
+                <button id="reset-filters-btn" class="btn btn-secondary">Clear Filters</button>
+            </div>
+
+            <!-- Release Notes List -->
+            <div id="releases-container" class="releases-list" style="display: none;">
+                <!-- JavaScript will populate cards here -->
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>BigQuery Release Notes Dashboard &bull; Built with Flask, vanilla CSS &amp; JavaScript</p>
+        </footer>
+    </div>
+
+    <!-- Twitter / X Drafting Modal -->
+    <div id="tweet-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-brands fa-x-twitter tweet-logo"></i>
+                    <h2>Compose Post to X/Twitter</h2>
+                </div>
+                <button id="close-modal-btn" class="close-modal-x"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="source-preview">
+                    <span class="preview-tag" id="preview-update-type">Feature</span>
+                    <span class="preview-date" id="preview-update-date">June 22, 2026</span>
+                    <p id="preview-update-snippet">Source content snippet...</p>
+                </div>
+                
+                <div class="tweet-composer">
+                    <label for="tweet-textarea">Edit your post text:</label>
+                    <textarea id="tweet-textarea" rows="6" maxlength="500"></textarea>
+                    
+                    <div class="composer-meta">
+                        <span id="char-counter" class="char-count">0 / 280</span>
+                        <span id="char-warning" class="char-warning-msg" style="display: none;">
+                            <i class="fa-solid fa-circle-exclamation"></i> Exceeds standard limit (280)
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="copy-tweet-btn" class="btn btn-secondary">
+                    <i class="fa-solid fa-copy"></i> Copy Text
+                </button>
+                <button id="publish-tweet-btn" class="btn btn-tweet">
+                    <i class="fa-brands fa-x-twitter"></i> Post to X
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
